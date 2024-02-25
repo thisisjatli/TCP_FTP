@@ -1,8 +1,9 @@
 import socket
 import os
+import sys
 
 HOST = "127.0.0.1"  # localhost
-PORT = 8000         # random port
+# PORT = 8000         # random port
 CHUNKSIZE = 1024    # size of one chunk
 
 def downloadFile(clientSocket, savefileName="newDownloadTestFile.pptx"):
@@ -51,6 +52,7 @@ def processServerResponse(clientSocket, clientRequest, serverMsg):
 
 
 if __name__ == "__main__":
+    PORT = int(sys.argv[1])
     # create socket for client side
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     clientsocket.connect((HOST, PORT))
