@@ -1,4 +1,5 @@
 import socket
+import os
 
 HOST = "127.0.0.1"  # localhost
 PORT = 8000         # random port
@@ -7,6 +8,7 @@ CHUNKSIZE = 1024    # size of one chunk
 def downloadFile(clientSocket, savefileName="newDownloadTestFile.pptx"):
     clientSocket.send("0".encode())     # tell the server it's ready
     
+    print("Start downloading...")
     with open(savefileName, 'wb') as fw:
         data = clientSocket.recv(CHUNKSIZE)
         while data and data != b"EOF":
@@ -14,10 +16,20 @@ def downloadFile(clientSocket, savefileName="newDownloadTestFile.pptx"):
             data = clientSocket.recv(CHUNKSIZE)
         fw.close()
     
-    print("Done downloading.")
+    print("Finish downloading.")
     return
 
-def uploadFile(clientSocket):
+def uploadFile(clientSocket, filename):
+    print("Start uploading...")
+    with open(filename, 'rb') as fr:
+        data = fr.read(CHUNKSIZE)
+        while data:
+            clientSocket.send(data)
+            data = fr.read(CHUNKSIZE)
+        fr.close()
+    
+    clientSocket.send(b"EOF")
+    print("Finish uploading.")
     return
 
 def processServerResponse(clientSocket, clientRequest, serverMsg):
@@ -31,7 +43,11 @@ def processServerResponse(clientSocket, clientRequest, serverMsg):
         downloadFile(clientSocket)
 
     elif clientRequestArr[0] == "upload":
-        uploadFile(clientSocket)
+        filename = clientRequestArr[1]
+        while filename not in os.listdir():
+            filename = input("Please enter an existing file.")
+
+        uploadFile(clientSocket, filename)
 
 
 if __name__ == "__main__":

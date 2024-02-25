@@ -15,8 +15,10 @@ def sendToClient(conn, filename="downloadTestFile.pptx"):
                 conn.send(data)
                 data = fr.read(CHUNKSIZE)
             fr.close()
-        print("Finish downloading.")
+        
         conn.send(b"EOF")   # the end of the file
+        print("Finish downloading.")
+    
     else:
         print("Some exceptions happen")
     return
@@ -24,7 +26,7 @@ def sendToClient(conn, filename="downloadTestFile.pptx"):
 def clientUpload(conn, filename="newUploadTestFile.pptx"):
     with open(filename, 'wb') as fw:
         data = conn.recv(CHUNKSIZE)
-        while data:
+        while data and data != b"EOF":
             # receive data from client and save to local disk
             fw.write(data)
             data = conn.recv(CHUNKSIZE)
@@ -32,6 +34,9 @@ def clientUpload(conn, filename="newUploadTestFile.pptx"):
             # need a condition to stop loop
             # if (EOF): break
         fw.close()
+
+    print("Finish uploading.")
+    return
 
 def requestHandling(conn, msg):
     msgArr = msg.split()
@@ -54,7 +59,7 @@ def requestHandling(conn, msg):
         else:
             serverResponse = "0:Request accepted. Start uploading."
             conn.send(serverResponse.encode())
-            clientUpload(conn, filename=msgArr[1])
+            clientUpload(conn)
 
     else:
         serverResponse = "2:This request is invalid, please input again."
