@@ -9,6 +9,8 @@ def sendToClient(conn, filename="downloadTestFile.pptx"):
     clientCode = conn.recv(CHUNKSIZE).decode()  # make sure the client is ready
     if int(clientCode) == 0:
         print("Start downloading...")
+        filesize = os.stat(filename).st_size
+        conn.send(str(filesize).encode())
         with open(filename, 'rb') as fr:
             data = fr.read(CHUNKSIZE)   # read and send file in chunks
             while data:
@@ -16,7 +18,7 @@ def sendToClient(conn, filename="downloadTestFile.pptx"):
                 data = fr.read(CHUNKSIZE)
             fr.close()
         
-        conn.send(b"EOF")   # the end of the file
+        # conn.send(b"EOF")   # the end of the file
         print("Finish downloading.")
     
     else:
@@ -24,15 +26,15 @@ def sendToClient(conn, filename="downloadTestFile.pptx"):
     return
 
 def clientUpload(conn, filename="newUploadTestFile.pptx"):
-    with open(filename, 'wb') as fw:
-        data = conn.recv(CHUNKSIZE)
-        while data and data != b"EOF":
-            # receive data from client and save to local disk
-            fw.write(data)
-            data = conn.recv(CHUNKSIZE)
+    print("Start uploading...")
+    filesize = int(conn.recv(CHUNKSIZE).decode())
 
-            # need a condition to stop loop
-            # if (EOF): break
+    with open(filename, 'wb') as fw:
+        while filesize > 0:
+            # receive data from client and save to local disk
+            data = conn.recv(CHUNKSIZE)
+            fw.write(data)
+            filesize = filesize - CHUNKSIZE
         fw.close()
 
     print("Finish uploading.")

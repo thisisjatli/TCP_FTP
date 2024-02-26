@@ -10,26 +10,29 @@ def downloadFile(clientSocket, savefileName="newDownloadTestFile.pptx"):
     clientSocket.send("0".encode())     # tell the server it's ready
     
     print("Start downloading...")
-    with open(savefileName, 'wb') as fw:
-        data = clientSocket.recv(CHUNKSIZE)
-        while data and data != b"EOF":
-            fw.write(data)
-            data = clientSocket.recv(CHUNKSIZE)
-        fw.close()
+    filesize = int(clientSocket.recv(CHUNKSIZE).decode())
     
+    with open(savefileName, 'wb') as fw:
+        while filesize > 0:
+            data = clientSocket.recv(CHUNKSIZE)
+            fw.write(data)
+            filesize = filesize - CHUNKSIZE
+        fw.close()
+
     print("Finish downloading.")
     return
 
 def uploadFile(clientSocket, filename):
     print("Start uploading...")
     with open(filename, 'rb') as fr:
+        filesize = os.stat(filename).st_size
+        clientSocket.send(str(filesize).encode())
         data = fr.read(CHUNKSIZE)
         while data:
             clientSocket.send(data)
             data = fr.read(CHUNKSIZE)
         fr.close()
-    
-    clientSocket.send(b"EOF")
+        
     print("Finish uploading.")
     return
 
